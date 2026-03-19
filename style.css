@@ -84,8 +84,7 @@ ul  { list-style: none; }
 .event-card,
 .quote-card,
 .bio__text,
-.bio__image-wrap,
-.facts__item {
+.bio__image-wrap {
   opacity: 0;
   transform: translateY(28px);
   transition: opacity 0.7s ease, transform 0.7s ease;
@@ -93,8 +92,7 @@ ul  { list-style: none; }
 .event-card.visible,
 .quote-card.visible,
 .bio__text.visible,
-.bio__image-wrap.visible,
-.facts__item.visible {
+.bio__image-wrap.visible {
   opacity: 1;
   transform: none;
 }
@@ -303,46 +301,6 @@ ul  { list-style: none; }
 @keyframes scrollLine {
   0%, 100% { transform: scaleX(1); opacity: 0.5; }
   50%       { transform: scaleX(1.5); opacity: 1; }
-}
-
-/* ---------- Facts ---------- */
-.facts {
-  background: var(--dark-3);
-  border-top: 1px solid rgba(201, 169, 110, 0.12);
-  border-bottom: 1px solid rgba(201, 169, 110, 0.12);
-  padding: 3rem 0;
-}
-
-.facts__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
-}
-
-.facts__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem;
-  border-right: 1px solid rgba(255,255,255,0.06);
-}
-.facts__item:last-child { border-right: none; }
-
-.facts__number {
-  font-family: var(--font-serif);
-  font-size: 3rem;
-  font-weight: 300;
-  color: var(--gold);
-  line-height: 1;
-  margin-bottom: 0.5rem;
-}
-
-.facts__label {
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  text-align: center;
 }
 
 /* ---------- Biography ---------- */
@@ -758,9 +716,6 @@ ul  { list-style: none; }
   .nav__links a { padding: 0.9rem 2.5rem; display: block; }
   .nav__hamburger { display: flex; }
 
-  .facts__grid { grid-template-columns: repeat(2, 1fr); }
-  .facts__item:nth-child(2) { border-right: none; }
-
   .event-card {
     grid-template-columns: 80px 1fr;
     grid-template-rows: auto auto;
@@ -778,7 +733,6 @@ ul  { list-style: none; }
 }
 
 @media (max-width: 480px) {
-  .facts__grid { grid-template-columns: 1fr 1fr; }
   .hero__title { font-size: 3.5rem; }
   .hero__cta { flex-direction: column; }
   .hero__cta .btn { width: 100%; text-align: center; }

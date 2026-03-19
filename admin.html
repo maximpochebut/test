@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Margarita Pochebut</title>
+  <link rel="stylesheet" href="admin.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">M</div>
+      <h1 class="login-title">Admin Panel</h1>
+      <p class="login-sub">Margarita Pochebut — Site Management</p>
+      <form class="login-form" id="loginForm">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
+        </div>
+        <p class="login-hint">Default password: <code>margarita2026</code></p>
+        <button type="submit" class="btn btn--primary btn--full">Sign In</button>
+        <p class="login-error" id="loginError"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin App -->
+  <div class="admin-app" id="adminApp" style="display:none">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__logo">M</span>
+        <div>
+          <p class="sidebar__name">Margarita Pochebut</p>
+          <p class="sidebar__role">Admin Panel</p>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <button class="sidebar__item sidebar__item--active" data-tab="events">
+          <span class="sidebar__icon">&#9834;</span> Events
+        </button>
+        <button class="sidebar__item" data-tab="photo">
+          <span class="sidebar__icon">&#9711;</span> Photo
+        </button>
+      </nav>
+      <div class="sidebar__footer">
+        <a href="index.html" class="sidebar__view-link">&#8592; View Site</a>
+        <button class="sidebar__logout" id="logoutBtn">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+
+      <!-- Events Tab -->
+      <section class="tab-panel" id="tabEvents">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Upcoming Events</h2>
+            <p class="panel-sub">Add, edit or remove events. Changes are saved to this browser.</p>
+          </div>
+          <button class="btn btn--primary" id="addEventBtn">+ Add Event</button>
+        </div>
+
+        <div class="events-editor" id="eventsEditor">
+          <!-- Event cards rendered here -->
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn btn--primary" id="saveEventsBtn">Save &amp; Publish</button>
+          <button class="btn btn--ghost" id="resetEventsBtn">Reset to Defaults</button>
+        </div>
+
+        <div class="toast" id="eventsToast"></div>
+      </section>
+
+      <!-- Photo Tab -->
+      <section class="tab-panel" id="tabPhoto" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Profile Photo</h2>
+            <p class="panel-sub">Upload a photo to replace the placeholder on the biography section.</p>
+          </div>
+        </div>
+
+        <div class="photo-editor">
+          <div class="photo-preview-wrap">
+            <div class="photo-preview" id="photoPreview">
+              <img id="photoPreviewImg" src="" alt="Preview" style="display:none" />
+              <div class="photo-preview__placeholder" id="photoPlaceholder">
+                <span>No photo uploaded</span>
+              </div>
+            </div>
+            <p class="photo-hint">Recommended: portrait orientation, min. 600 × 800 px</p>
+          </div>
+          <div class="photo-controls">
+            <label class="upload-label" for="photoInput">
+              <span>&#8593; Choose Photo</span>
+              <input type="file" id="photoInput" accept="image/*" />
+            </label>
+            <button class="btn btn--primary" id="savePhotoBtn" disabled>Save Photo</button>
+            <button class="btn btn--ghost" id="removePhotoBtn">Remove Photo</button>
+            <div class="toast" id="photoToast"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Event Edit Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Add Event</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <form id="eventForm">
+        <input type="hidden" id="editIndex" value="-1" />
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="evDay">Day</label>
+              <input type="text" id="evDay" placeholder="28" maxlength="2" required />
+            </div>
+            <div class="form-group">
+              <label for="evMonth">Month</label>
+              <select id="evMonth" required>
+                <option value="">Month</option>
+                <option>Jan</option><option>Feb</option><option>Mar</option>
+                <option>Apr</option><option>May</option><option>Jun</option>
+                <option>Jul</option><option>Aug</option><option>Sep</option>
+                <option>Oct</option><option>Nov</option><option>Dec</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="evYear">Year</label>
+              <input type="text" id="evYear" placeholder="2026" maxlength="4" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="evTag">Event Type</label>
+            <input type="text" id="evTag" placeholder="Solo Recital" required />
+          </div>
+          <div class="form-group">
+            <label for="evTitle">Title</label>
+            <input type="text" id="evTitle" placeholder="Event title" required />
+          </div>
+          <div class="form-group">
+            <label for="evVenue">Venue &amp; City</label>
+            <input type="text" id="evVenue" placeholder="Concert Hall, City, Country" required />
+          </div>
+          <div class="form-group">
+            <label for="evDesc">Description</label>
+            <textarea id="evDesc" rows="3" placeholder="Short description of the event…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn--ghost" id="modalCancel">Cancel</button>
+          <button type="submit" class="btn btn--primary" id="modalSave">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       Data
+    ============================================================ */
+    const ADMIN_PASSWORD = 'margarita2026';
+    const STORAGE_EVENTS = 'mp_events';
+    const STORAGE_PHOTO  = 'mp_photo';
+
+    const DEFAULT_EVENTS = [
+      {
+        day: '12', month: 'Apr', year: '2026',
+        tag: 'Solo Recital',
+        title: 'Spring Recital — Bach &amp; Brahms',
+        venue: 'Mozarteum Großer Saal, Salzburg, Austria',
+        description: 'Solo recital featuring Bach\'s Partita No. 2 in D minor and Brahms Sonata No. 1 in G major.'
+      },
+      {
+        day: '24', month: 'May', year: '2026',
+        tag: 'Orchestral',
+        title: 'Mendelssohn Violin Concerto',
+        venue: 'National Philharmonic of Ukraine, Kyiv',
+        description: 'Performing the Mendelssohn Violin Concerto in E minor with the National Philharmonic Orchestra of Ukraine.'
+      },
+      {
+        day: '08', month: 'Jun', year: '2026',
+        tag: 'Chamber Music',
+        title: 'Il Piccolo Violino Magico Festival',
+        venue: 'Teatro Sociale, Como, Italy',
+        description: 'Returning to the prestigious Italian competition and festival as a laureate performer.'
+      },
+      {
+        day: '19', month: 'Jul', year: '2026',
+        tag: 'Summer Festival',
+        title: 'International Menuhin Music Academy Gala',
+        venue: 'Rolle, Switzerland',
+        description: 'Special gala concert uniting alumni of the International Menuhin Music Academy.'
+      }
+    ];
+
+    let events = JSON.parse(localStorage.getItem(STORAGE_EVENTS) || 'null') || DEFAULT_EVENTS.map(e => ({ ...e }));
+    let pendingPhotoDataURL = null;
+
+    /* ============================================================
+       Auth
+    ============================================================ */
+    function checkAuth() {
+      return sessionStorage.getItem('mp_admin') === '1';
+    }
+
+    if (checkAuth()) showApp();
+
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const pw = document.getElementById('password').value;
+      if (pw === ADMIN_PASSWORD) {
+        sessionStorage.setItem('mp_admin', '1');
+        showApp();
+      } else {
+        document.getElementById('loginError').textContent = 'Incorrect password. Please try again.';
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('mp_admin');
+      document.getElementById('adminApp').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('password').value = '';
+    });
+
+    function showApp() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display = 'flex';
+      renderEventCards();
+      loadPhotoPreview();
+    }
+
+    /* ============================================================
+       Tabs
+    ============================================================ */
+    document.querySelectorAll('.sidebar__item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar__item').forEach(b => b.classList.remove('sidebar__item--active'));
+        btn.classList.add('sidebar__item--active');
+        const tab = btn.dataset.tab;
+        document.getElementById('tabEvents').style.display = tab === 'events' ? 'block' : 'none';
+        document.getElementById('tabPhoto').style.display  = tab === 'photo'  ? 'block' : 'none';
+      });
+    });
+
+    /* ============================================================
+       Events Editor
+    ============================================================ */
+    function renderEventCards() {
+      const container = document.getElementById('eventsEditor');
+      if (events.length === 0) {
+        container.innerHTML = '<p class="empty-state">No events yet. Click "+ Add Event" to create one.</p>';
+        return;
+      }
+      container.innerHTML = events.map((e, i) => `
+        <div class="event-row">
+          <div class="event-row__date">${e.day} ${e.month} ${e.year}</div>
+          <div class="event-row__body">
+            <span class="event-row__tag">${e.tag}</span>
+            <strong class="event-row__title">${e.title}</strong>
+            <span class="event-row__venue">${e.venue}</span>
+          </div>
+          <div class="event-row__actions">
+            <button class="icon-btn" title="Edit" onclick="openModal(${i})">&#9998;</button>
+            <button class="icon-btn icon-btn--danger" title="Delete" onclick="deleteEvent(${i})">&#10005;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteEvent(i) {
+      if (confirm('Delete this event?')) {
+        events.splice(i, 1);
+        renderEventCards();
+      }
+    }
+
+    document.getElementById('saveEventsBtn').addEventListener('click', () => {
+      localStorage.setItem(STORAGE_EVENTS, JSON.stringify(events));
+      showToast('eventsToast', 'Events saved and published!');
+    });
+
+    document.getElementById('resetEventsBtn').addEventListener('click', () => {
+      if (confirm('Reset events to defaults? This will remove your custom events.')) {
+        events = DEFAULT_EVENTS.map(e => ({ ...e }));
+        localStorage.removeItem(STORAGE_EVENTS);
+        renderEventCards();
+        showToast('eventsToast', 'Reset to default events.');
+      }
+    });
+
+    document.getElementById('addEventBtn').addEventListener('click', () => openModal(-1));
+
+    /* ============================================================
+       Event Modal
+    ============================================================ */
+    function openModal(index) {
+      document.getElementById('editIndex').value = index;
+      document.getElementById('modalTitle').textContent = index === -1 ? 'Add Event' : 'Edit Event';
+
+      const e = index === -1 ? {} : events[index];
+      document.getElementById('evDay').value   = e.day   || '';
+      document.getElementById('evMonth').value = e.month || '';
+      document.getElementById('evYear').value  = e.year  || '';
+      document.getElementById('evTag').value   = (e.tag  || '').replace(/&amp;/g, '&');
+      document.getElementById('evTitle').value = (e.title|| '').replace(/&amp;/g, '&');
+      document.getElementById('evVenue').value = e.venue || '';
+      document.getElementById('evDesc').value  = e.description || '';
+
+      document.getElementById('modalBackdrop').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').style.display = 'none';
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalCancel').addEventListener('click', closeModal);
+    document.getElementById('modalBackdrop').addEventListener('click', e => {
+      if (e.target === document.getElementById('modalBackdrop')) closeModal();
+    });
+
+    document.getElementById('eventForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const escape = s => s.replace(/&/g, '&amp;');
+      const entry = {
+        day:         document.getElementById('evDay').value.trim().padStart(2, '0'),
+        month:       document.getElementById('evMonth').value,
+        year:        document.getElementById('evYear').value.trim(),
+        tag:         escape(document.getElementById('evTag').value.trim()),
+        title:       escape(document.getElementById('evTitle').value.trim()),
+        venue:       document.getElementById('evVenue').value.trim(),
+        description: document.getElementById('evDesc').value.trim()
+      };
+
+      const idx = parseInt(document.getElementById('editIndex').value, 10);
+      if (idx === -1) {
+        events.push(entry);
+      } else {
+        events[idx] = entry;
+      }
+
+      renderEventCards();
+      closeModal();
+    });
+
+    /* ============================================================
+       Photo Editor
+    ============================================================ */
+    function loadPhotoPreview() {
+      const saved = localStorage.getItem(STORAGE_PHOTO);
+      if (saved) {
+        showPreviewImage(saved);
+      }
+    }
+
+    document.getElementById('photoInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        pendingPhotoDataURL = ev.target.result;
+        showPreviewImage(pendingPhotoDataURL);
+        document.getElementById('savePhotoBtn').disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function showPreviewImage(src) {
+      const img = document.getElementById('photoPreviewImg');
+      img.src = src;
+      img.style.display = 'block';
+      document.getElementById('photoPlaceholder').style.display = 'none';
+    }
+
+    document.getElementById('savePhotoBtn').addEventListener('click', () => {
+      if (!pendingPhotoDataURL) return;
+      localStorage.setItem(STORAGE_PHOTO, pendingPhotoDataURL);
+      pendingPhotoDataURL = null;
+      document.getElementById('savePhotoBtn').disabled = true;
+      showToast('photoToast', 'Photo saved and published!');
+    });
+
+    document.getElementById('removePhotoBtn').addEventListener('click', () => {
+      if (!confirm('Remove the current photo?')) return;
+      localStorage.removeItem(STORAGE_PHOTO);
+      pendingPhotoDataURL = null;
+      document.getElementById('photoPreviewImg').style.display = 'none';
+      document.getElementById('photoPreviewImg').src = '';
+      document.getElementById('photoPlaceholder').style.display = 'flex';
+      document.getElementById('savePhotoBtn').disabled = true;
+      showToast('photoToast', 'Photo removed.');
+    });
+
+    /* ============================================================
+       Toast helper
+    ============================================================ */
+    function showToast(id, msg) {
+      const toast = document.getElementById(id);
+      toast.textContent = msg;
+      toast.classList.add('toast--visible');
+      setTimeout(() => toast.classList.remove('toast--visible'), 3000);
+    }
+  </script>
+</body>
+</html>
