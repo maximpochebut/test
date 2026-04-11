@@ -18,6 +18,7 @@
       <li><a href="#about">About</a></li>
       <li><a href="#bio">Biography</a></li>
       <li><a href="#events">Events</a></li>
+      <li><a href="#gallery">In the Spotlight</a></li>
       <li><a href="#media">Feedback</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -28,7 +29,24 @@
 
   <!-- Hero -->
   <section class="hero" id="about">
-    <div class="hero__bg"></div>
+    <!-- Background video -->
+    <div class="hero__video-wrap">
+      <video
+        id="heroBgVideo"
+        class="hero__video"
+        autoplay
+        muted
+        loop
+        playsinline
+        poster=""
+      >
+        <!-- Drop your video file here, e.g.: src="video/hero.mp4" -->
+        <!-- Supported formats: mp4 (H.264), webm -->
+      </video>
+      <div class="hero__video-overlay"></div>
+    </div>
+
+    <div class="hero__bg hero__bg--fallback"></div>
     <div class="hero__content">
       <p class="hero__subtitle">Violinist &amp; Performer</p>
       <h1 class="hero__title">Margarita<br /><em>Pochebut</em></h1>
@@ -109,6 +127,30 @@
       <div class="events__list" id="eventsList">
         <!-- Populated by JavaScript -->
       </div>
+    </div>
+  </section>
+
+  <!-- Gallery: In the Spotlight -->
+  <section class="gallery" id="gallery">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-label">Photography</span>
+        <h2 class="section-title">In the Spotlight</h2>
+      </div>
+      <div class="gallery__grid" id="galleryGrid">
+        <!-- Populated by JavaScript from localStorage or defaults -->
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" style="display:none" role="dialog" aria-modal="true" aria-label="Photo viewer">
+      <button class="lightbox__close" id="lightboxClose" aria-label="Close">&times;</button>
+      <button class="lightbox__prev" id="lightboxPrev" aria-label="Previous">&#8592;</button>
+      <div class="lightbox__img-wrap">
+        <img id="lightboxImg" src="" alt="" />
+        <p class="lightbox__caption" id="lightboxCaption"></p>
+      </div>
+      <button class="lightbox__next" id="lightboxNext" aria-label="Next">&#8594;</button>
     </div>
   </section>
 
@@ -225,6 +267,7 @@
         <a href="#about">About</a>
         <a href="#bio">Biography</a>
         <a href="#events">Events</a>
+        <a href="#gallery">In the Spotlight</a>
         <a href="#media">Feedback</a>
         <a href="#contact">Contact</a>
         <a href="admin.html" style="color:var(--text-muted); opacity:0.5;">Admin</a>
@@ -346,10 +389,83 @@
     document.querySelectorAll('.quote-card, .bio__text, .bio__image-wrap')
       .forEach(el => observer.observe(el));
 
+    /* ---- Gallery ---- */
+    const DEFAULT_GALLERY = [];  // empty until admin uploads photos
+
+    function renderGallery(photos) {
+      const grid = document.getElementById('galleryGrid');
+      if (!photos || photos.length === 0) {
+        grid.innerHTML = '<p class="gallery__empty">Photos coming soon.</p>';
+        return;
+      }
+      grid.innerHTML = photos.map((p, i) => `
+        <button class="gallery__item" data-index="${i}" aria-label="Open photo ${i + 1}">
+          <img src="${p.src}" alt="${p.caption || ''}" loading="lazy" />
+          ${p.caption ? `<span class="gallery__caption">${p.caption}</span>` : ''}
+        </button>
+      `).join('');
+      grid.querySelectorAll('.gallery__item').forEach(btn => {
+        btn.addEventListener('click', () => openLightbox(parseInt(btn.dataset.index), photos));
+      });
+    }
+
+    function openLightbox(index, photos) {
+      let current = index;
+      const lb      = document.getElementById('lightbox');
+      const lbImg   = document.getElementById('lightboxImg');
+      const lbCap   = document.getElementById('lightboxCaption');
+
+      function show(i) {
+        current = (i + photos.length) % photos.length;
+        lbImg.src = photos[current].src;
+        lbImg.alt = photos[current].caption || '';
+        lbCap.textContent = photos[current].caption || '';
+      }
+
+      show(current);
+      lb.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      document.getElementById('lightboxPrev').onclick = () => show(current - 1);
+      document.getElementById('lightboxNext').onclick = () => show(current + 1);
+      document.getElementById('lightboxClose').onclick = closeLightbox;
+      lb.onclick = e => { if (e.target === lb) closeLightbox(); };
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => {
+      const lb = document.getElementById('lightbox');
+      if (lb.style.display === 'flex') {
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft')  document.getElementById('lightboxPrev').click();
+        if (e.key === 'ArrowRight') document.getElementById('lightboxNext').click();
+      }
+    });
+
+    /* ---- Hero video ---- */
+    (function () {
+      const saved = localStorage.getItem('mp_hero_video');
+      if (saved) {
+        const video = document.getElementById('heroBgVideo');
+        const src = document.createElement('source');
+        src.src = saved;
+        src.type = saved.startsWith('data:video/webm') ? 'video/webm' : 'video/mp4';
+        video.appendChild(src);
+        video.load();
+      }
+    })();
+
     /* ---- Init ---- */
     const savedEvents = localStorage.getItem('mp_events');
     renderEvents(savedEvents ? JSON.parse(savedEvents) : DEFAULT_EVENTS);
     loadPhoto();
+
+    const savedGallery = localStorage.getItem('mp_gallery');
+    renderGallery(savedGallery ? JSON.parse(savedGallery) : DEFAULT_GALLERY);
   </script>
 </body>
 </html>
