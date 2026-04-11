@@ -46,7 +46,13 @@
           <span class="sidebar__icon">&#9834;</span> Events
         </button>
         <button class="sidebar__item" data-tab="photo">
-          <span class="sidebar__icon">&#9711;</span> Photo
+          <span class="sidebar__icon">&#9711;</span> Profile Photo
+        </button>
+        <button class="sidebar__item" data-tab="gallery">
+          <span class="sidebar__icon">&#9726;</span> Gallery
+        </button>
+        <button class="sidebar__item" data-tab="video">
+          <span class="sidebar__icon">&#9654;</span> Hero Video
         </button>
       </nav>
       <div class="sidebar__footer">
@@ -111,7 +117,82 @@
         </div>
       </section>
 
+      <!-- Gallery Tab -->
+      <section class="tab-panel" id="tabGallery" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">In the Spotlight</h2>
+            <p class="panel-sub">Upload photos for the gallery. Drag to reorder. Click Save to publish.</p>
+          </div>
+          <label class="btn btn--primary" for="galleryInput">+ Add Photos
+            <input type="file" id="galleryInput" accept="image/*" multiple style="display:none" />
+          </label>
+        </div>
+
+        <div class="gallery-admin-grid" id="galleryAdminGrid">
+          <p class="empty-state" id="galleryEmpty">No photos yet. Click "+ Add Photos" to upload.</p>
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn btn--primary" id="saveGalleryBtn">Save &amp; Publish</button>
+          <button class="btn btn--ghost" id="clearGalleryBtn">Remove All</button>
+        </div>
+        <div class="toast" id="galleryToast"></div>
+      </section>
+
+      <!-- Hero Video Tab -->
+      <section class="tab-panel" id="tabVideo" style="display:none">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Hero Background Video</h2>
+            <p class="panel-sub">Upload a short looping video (MP4 or WebM). Keep it under 15 MB for best performance.</p>
+          </div>
+        </div>
+
+        <div class="photo-editor">
+          <div class="photo-preview-wrap">
+            <div class="photo-preview video-preview" id="videoPreview">
+              <video id="videoPreviewEl" style="display:none; width:100%; height:100%; object-fit:cover" muted loop autoplay playsinline></video>
+              <div class="photo-preview__placeholder" id="videoPlaceholder">
+                <span>No video uploaded</span>
+              </div>
+            </div>
+            <p class="photo-hint">Recommended: landscape, 1920×1080, H.264 MP4. Muted &amp; looping.</p>
+          </div>
+          <div class="photo-controls">
+            <label class="upload-label" for="videoInput">
+              <span>&#8593; Choose Video</span>
+              <input type="file" id="videoInput" accept="video/mp4,video/webm" />
+            </label>
+            <p class="upload-size-hint" id="videoSizeHint"></p>
+            <button class="btn btn--primary" id="saveVideoBtn" disabled>Save Video</button>
+            <button class="btn btn--ghost" id="removeVideoBtn">Remove Video</button>
+            <div class="toast" id="videoToast"></div>
+          </div>
+        </div>
+      </section>
+
     </main>
+  </div>
+
+  <!-- Gallery Caption Modal -->
+  <div class="modal-backdrop" id="captionModalBackdrop" style="display:none">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Caption</h3>
+        <button class="modal-close" id="captionModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="captionInput">Caption (optional)</label>
+          <input type="text" id="captionInput" placeholder="e.g. Mozarteum Gala, Salzburg 2025" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" id="captionCancel">Cancel</button>
+        <button class="btn btn--primary" id="captionSave">Save Caption</button>
+      </div>
+    </div>
   </div>
 
   <!-- Event Edit Modal -->
@@ -405,6 +486,157 @@
       document.getElementById('photoPlaceholder').style.display = 'flex';
       document.getElementById('savePhotoBtn').disabled = true;
       showToast('photoToast', 'Photo removed.');
+    });
+
+    /* ============================================================
+       Gallery Editor
+    ============================================================ */
+    const STORAGE_GALLERY = 'mp_gallery';
+    let galleryPhotos = JSON.parse(localStorage.getItem(STORAGE_GALLERY) || '[]');
+    let captionEditIndex = -1;
+
+    function renderGalleryAdmin() {
+      const grid = document.getElementById('galleryAdminGrid');
+      const empty = document.getElementById('galleryEmpty');
+      if (galleryPhotos.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      grid.innerHTML = galleryPhotos.map((p, i) => `
+        <div class="gallery-admin-item">
+          <img src="${p.src}" alt="${p.caption || ''}" />
+          <div class="gallery-admin-item__overlay">
+            <button class="icon-btn" title="Edit caption" onclick="openCaptionModal(${i})">&#9998;</button>
+            <button class="icon-btn icon-btn--danger" title="Remove" onclick="removeGalleryPhoto(${i})">&#10005;</button>
+          </div>
+          ${p.caption ? `<span class="gallery-admin-item__caption">${p.caption}</span>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function removeGalleryPhoto(i) {
+      galleryPhotos.splice(i, 1);
+      renderGalleryAdmin();
+    }
+
+    function openCaptionModal(i) {
+      captionEditIndex = i;
+      document.getElementById('captionInput').value = galleryPhotos[i].caption || '';
+      document.getElementById('captionModalBackdrop').style.display = 'flex';
+    }
+
+    document.getElementById('captionModalClose').addEventListener('click', () => {
+      document.getElementById('captionModalBackdrop').style.display = 'none';
+    });
+    document.getElementById('captionCancel').addEventListener('click', () => {
+      document.getElementById('captionModalBackdrop').style.display = 'none';
+    });
+    document.getElementById('captionSave').addEventListener('click', () => {
+      galleryPhotos[captionEditIndex].caption = document.getElementById('captionInput').value.trim();
+      renderGalleryAdmin();
+      document.getElementById('captionModalBackdrop').style.display = 'none';
+    });
+
+    document.getElementById('galleryInput').addEventListener('change', function() {
+      const files = Array.from(this.files);
+      let loaded = 0;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          galleryPhotos.push({ src: ev.target.result, caption: '' });
+          loaded++;
+          if (loaded === files.length) renderGalleryAdmin();
+        };
+        reader.readAsDataURL(file);
+      });
+      this.value = '';
+    });
+
+    document.getElementById('saveGalleryBtn').addEventListener('click', () => {
+      localStorage.setItem(STORAGE_GALLERY, JSON.stringify(galleryPhotos));
+      showToast('galleryToast', 'Gallery saved and published!');
+    });
+
+    document.getElementById('clearGalleryBtn').addEventListener('click', () => {
+      if (!confirm('Remove all gallery photos?')) return;
+      galleryPhotos = [];
+      localStorage.removeItem(STORAGE_GALLERY);
+      renderGalleryAdmin();
+      showToast('galleryToast', 'Gallery cleared.');
+    });
+
+    /* ============================================================
+       Hero Video Editor
+    ============================================================ */
+    const STORAGE_VIDEO = 'mp_hero_video';
+    let pendingVideoDataURL = null;
+
+    (function loadVideoPreview() {
+      const saved = localStorage.getItem(STORAGE_VIDEO);
+      if (saved) showVideoPreview(saved);
+    })();
+
+    function showVideoPreview(src) {
+      const vid = document.getElementById('videoPreviewEl');
+      vid.src = src;
+      vid.style.display = 'block';
+      document.getElementById('videoPlaceholder').style.display = 'none';
+    }
+
+    document.getElementById('videoInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      document.getElementById('videoSizeHint').textContent = `File size: ${mb} MB${mb > 15 ? ' — consider compressing for faster load' : ''}`;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        pendingVideoDataURL = ev.target.result;
+        showVideoPreview(pendingVideoDataURL);
+        document.getElementById('saveVideoBtn').disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('saveVideoBtn').addEventListener('click', () => {
+      if (!pendingVideoDataURL) return;
+      try {
+        localStorage.setItem(STORAGE_VIDEO, pendingVideoDataURL);
+        pendingVideoDataURL = null;
+        document.getElementById('saveVideoBtn').disabled = true;
+        showToast('videoToast', 'Video saved and published!');
+      } catch(e) {
+        showToast('videoToast', 'File too large for storage. Please use a smaller video.');
+      }
+    });
+
+    document.getElementById('removeVideoBtn').addEventListener('click', () => {
+      if (!confirm('Remove the hero video?')) return;
+      localStorage.removeItem(STORAGE_VIDEO);
+      pendingVideoDataURL = null;
+      const vid = document.getElementById('videoPreviewEl');
+      vid.src = ''; vid.style.display = 'none';
+      document.getElementById('videoPlaceholder').style.display = 'flex';
+      document.getElementById('saveVideoBtn').disabled = true;
+      showToast('videoToast', 'Video removed.');
+    });
+
+    /* ============================================================
+       Tab switching (updated to include gallery & video)
+    ============================================================ */
+    // Override the earlier tab listener to handle all 4 tabs
+    document.querySelectorAll('.sidebar__item[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar__item').forEach(b => b.classList.remove('sidebar__item--active'));
+        btn.classList.add('sidebar__item--active');
+        const tab = btn.dataset.tab;
+        document.getElementById('tabEvents').style.display  = tab === 'events'  ? 'block' : 'none';
+        document.getElementById('tabPhoto').style.display   = tab === 'photo'   ? 'block' : 'none';
+        document.getElementById('tabGallery').style.display = tab === 'gallery' ? 'block' : 'none';
+        document.getElementById('tabVideo').style.display   = tab === 'video'   ? 'block' : 'none';
+        if (tab === 'gallery') renderGalleryAdmin();
+      });
     });
 
     /* ============================================================
